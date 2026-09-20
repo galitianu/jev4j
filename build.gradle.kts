@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.galitianu"
-version = "0.1.0"
+version = "0.2.0-SNAPSHOT"
 
 // The version users compile against. Java 17 is the floor Spring Boot 3.x sets, and the
 // library uses nothing newer; see close() in TypeSafeClient for the one runtime concession.
