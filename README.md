@@ -189,6 +189,3 @@ summaries at `INFO`, request bodies at `DEBUG`. Route it through SLF4J or JUL as
 ```
 
 The build provisions JDK 21 via the Foojay toolchain resolver if none is installed.
-
-See [DESIGN.md](DESIGN.md) for the layered roadmap: annotated interfaces (Layer 2) and
-confidence-based routing (Layer 3) on top of this core.
