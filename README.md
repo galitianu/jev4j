@@ -1,5 +1,10 @@
 # jev4j
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.galitianu/jev4j?label=maven%20central)](https://central.sonatype.com/artifact/com.galitianu/jev4j)
+[![CI](https://github.com/galitianu/jev4j/actions/workflows/ci.yml/badge.svg)](https://github.com/galitianu/jev4j/actions/workflows/ci.yml)
+[![Javadoc](https://img.shields.io/badge/javadoc-latest-blue)](https://galitianu.github.io/jev4j/latest/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Java SDK for the [TypeSafe AI](https://typesafe.ai) API. Java 17+.
 
 TypeSafe answers typed questions about a piece of text or JSON (the *state*) in one call:
@@ -208,3 +213,8 @@ Undocumented elements are allowed; documentation that contradicts the code is no
 `.github/workflows/javadoc.yml` publishes to GitHub Pages: pushes to `main` land in
 `/snapshot/`, and tagging `vX.Y.Z` publishes `/X.Y.Z/` and moves `/latest/` forward.
 Released versions stay online, so users on an old release read docs for that release.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through
+[SECURITY.md](SECURITY.md), not the issue tracker.

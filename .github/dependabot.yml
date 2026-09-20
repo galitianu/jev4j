@@ -1,0 +1,17 @@
+# Pinned action SHAs do not update themselves, which is the cost of pinning.
+# Dependabot opens the bump PRs and keeps the `# v5` comments in step.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
