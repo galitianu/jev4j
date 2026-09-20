@@ -43,11 +43,18 @@ final class AnswerDecoder {
         if (!type.equals(question.type())) {
             throw new TypeSafeException("Answer \"" + key + "\" has type \"" + type + "\" but the question was a " + question.type() + ".");
         }
-        return switch (question) {
-            case Noul n -> new NoulAnswer(requireNumber(key, node, "noul"));
-            case Choice<?> c -> decodeChoice(key, c, node);
-            case Score s -> decodeScore(key, node);
-        };
+        // An if/instanceof chain rather than a pattern switch: the library compiles
+        // against Java 17, where switch patterns are still a preview feature.
+        if (question instanceof Noul) {
+            return new NoulAnswer(requireNumber(key, node, "noul"));
+        }
+        if (question instanceof Choice<?> c) {
+            return decodeChoice(key, c, node);
+        }
+        if (question instanceof Score) {
+            return decodeScore(key, node);
+        }
+        throw new TypeSafeException("Unknown question type: " + question.getClass().getName());
     }
 
     private <L> ChoiceAnswer<L> decodeChoice(String key, Choice<L> question, JsonNode node) {

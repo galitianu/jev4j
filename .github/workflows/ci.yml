@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ["21", "25"]
+        java: ["17", "21", "25"]
     steps:
       - uses: actions/checkout@v5
 
@@ -33,8 +33,10 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      # -PjavaToolchain makes the Gradle toolchain the matrix JDK, so this really does
+      # build and test on 17 rather than provisioning 21 behind our back.
       - name: Build, test and javadoc
-        run: ./gradlew build javadoc --stacktrace
+        run: ./gradlew build javadoc -PjavaToolchain=${{ matrix.java }} --stacktrace
 
       - name: Upload test report
         if: failure()

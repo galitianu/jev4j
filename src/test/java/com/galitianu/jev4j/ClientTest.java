@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -205,6 +206,24 @@ class ClientTest {
         }
         assertEquals(1, api.requests.size());
         assertEquals("1", api.requests.get(0).header("X-Call"));
+    }
+
+    @Test
+    void closeIsIdempotentAndLeavesASuppliedHttpClientAlone() {
+        api.ok(Map.of("q0", noulAnswer(0.5)));
+        TypeSafeClient owned = TestSupport.client(api).build();
+        owned.close();
+        owned.close();
+
+        HttpClient supplied = HttpClient.newHttpClient();
+        try (TypeSafeClient client = TestSupport.client(api).httpClient(supplied).build()) {
+            assertEquals(0.5, client.systemOne("s", Noul.of("x")).noul("q0").noul());
+        }
+        // The SDK did not own it, so it must still work after the client was closed.
+        api.ok(Map.of("q0", noulAnswer(0.25)));
+        try (TypeSafeClient client = TestSupport.client(api).httpClient(supplied).build()) {
+            assertEquals(0.25, client.systemOne("s", Noul.of("x")).noul("q0").noul());
+        }
     }
 
     @Test

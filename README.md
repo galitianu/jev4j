@@ -1,6 +1,6 @@
 # jev4j
 
-Java SDK for the [TypeSafe AI](https://typesafe.ai) API. Java 21+.
+Java SDK for the [TypeSafe AI](https://typesafe.ai) API. Java 17+.
 
 TypeSafe answers typed questions about a piece of text or JSON (the *state*) in one call:
 a yes/no probability (**noul**), a pick from a fixed set (**choice**), or a rating on an

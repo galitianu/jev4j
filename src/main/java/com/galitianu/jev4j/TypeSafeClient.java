@@ -1,12 +1,19 @@
 package com.galitianu.jev4j;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleSupplier;
 
 /**
@@ -43,6 +50,22 @@ public final class TypeSafeClient implements AutoCloseable {
     private final Models models;
     private final String defaultModel;
     private final HttpClient ownedHttpClient;
+    private final ExecutorService ownedExecutor;
+
+    /**
+     * {@code HttpClient.close()}, or {@code null} below Java 21. The library compiles against
+     * Java 17, where {@code HttpClient} is not {@code AutoCloseable}; on a newer runtime we still
+     * want its graceful drain of in-flight requests.
+     */
+    private static final MethodHandle HTTP_CLIENT_CLOSE = findHttpClientClose();
+
+    private static MethodHandle findHttpClientClose() {
+        try {
+            return MethodHandles.publicLookup().findVirtual(HttpClient.class, "close", MethodType.methodType(void.class));
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null;
+        }
+    }
 
     private TypeSafeClient(Builder b) {
         String apiKey = firstNonBlank(b.apiKey, env(ENV_API_KEY));
@@ -54,11 +77,16 @@ public final class TypeSafeClient implements AutoCloseable {
         ObjectMapper mapper = b.objectMapper == null ? new ObjectMapper() : b.objectMapper;
         HttpClient http;
         if (b.httpClient == null) {
-            http = HttpClient.newBuilder().connectTimeout(b.timeout).build();
+            // Supplying the executor is what makes close() able to release the request threads on
+            // Java 17. Daemon threads, matching the pool HttpClient would have created for itself,
+            // so a client that is never closed cannot keep the JVM alive.
+            this.ownedExecutor = Executors.newCachedThreadPool(daemonThreadFactory());
+            http = HttpClient.newBuilder().connectTimeout(b.timeout).executor(ownedExecutor).build();
             this.ownedHttpClient = http;
         } else {
             http = b.httpClient;
             this.ownedHttpClient = null;
+            this.ownedExecutor = null;
         }
         this.transport = new Transport(http, mapper, baseUrl, apiKey, b.timeout, b.retry,
             Collections.unmodifiableMap(new LinkedHashMap<>(b.defaultHeaders)), b.random);
@@ -118,12 +146,31 @@ public final class TypeSafeClient implements AutoCloseable {
             .thenApply(json -> decoder.decode(request, json));
     }
 
-    /** Closes the HTTP client if this instance created it. */
+    /** Closes the HTTP client if this instance created it. A client passed to the builder is left alone. */
     @Override
     public void close() {
-        if (ownedHttpClient != null) {
-            ownedHttpClient.close();
+        if (ownedHttpClient == null) {
+            return;
         }
+        if (HTTP_CLIENT_CLOSE != null) {
+            try {
+                HTTP_CLIENT_CLOSE.invoke(ownedHttpClient);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new TypeSafeException("Failed to close the HTTP client.", e);
+            }
+        }
+        ownedExecutor.shutdown();
+    }
+
+    private static ThreadFactory daemonThreadFactory() {
+        AtomicInteger counter = new AtomicInteger();
+        return runnable -> {
+            Thread t = new Thread(runnable, "jev4j-http-" + counter.incrementAndGet());
+            t.setDaemon(true);
+            return t;
+        };
     }
 
     private static String env(String name) {

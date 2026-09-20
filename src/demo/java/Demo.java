@@ -36,7 +36,7 @@ public class Demo {
             SystemOneResponse res = client.systemOne(ticket, isBilling, tone, urgency, refundRisk);
 
             System.out.printf("billing?     %.2f%n", res.get(isBilling).noul());
-            System.out.printf("tone         %s (%.2f)%n", res.get().choice(), res.get(tone).probability(res.get(tone).choice()));
+            System.out.printf("tone         %s (%.2f)%n", res.get(tone).choice(), res.get(tone).probability(res.get(tone).choice()));
             System.out.printf("urgency      %.2f on a 0-3 scale: %s%n", res.get(urgency).score(), res.get(urgency).legend());
             System.out.printf("refund risk  %.2f (%.2f confidence)%n", res.get(refundRisk).score(), res.get(refundRisk).confidence());
             System.out.printf("tokens       %d in / %d out, model %s%n", res.usage().inputTokens(), res.usage().outputTokens(), res.model());
