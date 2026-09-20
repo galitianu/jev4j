@@ -45,11 +45,19 @@ Andrei Galitianu <andrei@galitianu.com>
 7B9C 0BE8 A57F C168 3936  272F 31F0 7899 40A0 31BB
 ```
 
-The public key is on `keys.openpgp.org` and `keyserver.ubuntu.com`. To check a download:
+To check a download:
 
 ```sh
-gpg --keyserver keys.openpgp.org --recv-keys 7B9C0BE8A57FC1683936272F31F0789940A031BB
+gpg --keyserver keyserver.ubuntu.com --recv-keys 7B9C0BE8A57FC1683936272F31F0789940A031BB
 gpg --verify jev4j-0.1.0.jar.asc jev4j-0.1.0.jar
 ```
+
+A good result names the key above. gpg will also warn that the key "is not certified
+with a trusted signature" — that is expected and only means you have not personally
+signed it; it does not indicate a problem with the artifact.
+
+The key is also on `keys.openpgp.org`, but that server strips the user ID from a key
+until the address is confirmed, and gpg discards a key with no user ID. Use
+`keyserver.ubuntu.com`.
 
 If a jar claiming to be jev4j does not verify against that fingerprint, please report it.
