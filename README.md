@@ -13,7 +13,7 @@ API reference: **[latest](https://galitianu.github.io/jev4j/latest/)** &middot; 
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("com.galitianu:jev4j:0.1.0-SNAPSHOT")
+    implementation("com.galitianu:jev4j:0.1.0")
 }
 ```
 
@@ -22,11 +22,20 @@ dependencies {
 <dependency>
   <groupId>com.galitianu</groupId>
   <artifactId>jev4j</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
 </dependency>
 ```
 
 Jackson (`jackson-databind`) is the only dependency.
+
+Every commit on `main` is also published as a snapshot of the next version (for example
+`0.2.0-SNAPSHOT`), from:
+
+```kotlin
+repositories {
+    maven("https://central.sonatype.com/repository/maven-snapshots/")
+}
+```
 
 ## Quickstart
 

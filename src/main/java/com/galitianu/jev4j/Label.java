@@ -12,5 +12,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Label {
+    /**
+     * The wire label for the annotated constant.
+     *
+     * @return the label sent instead of the lower-cased constant name
+     */
     String value();
 }

@@ -1,10 +1,15 @@
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.SourcesJar
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
     `java-library`
-    `maven-publish`
+    id("com.vanniktech.maven.publish") version "0.37.0"
 }
 
 group = "com.galitianu"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0"
 
 // The version users compile against. Java 17 is the floor Spring Boot 3.x sets, and the
 // library uses nothing newer; see close() in TypeSafeClient for the one runtime concession.
@@ -30,8 +35,20 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(javaToolchain))
     }
-    withSourcesJar()
-    withJavadocJar()
+}
+
+// Version.java is generated so the version has exactly one source of truth: this file.
+val generateVersionSource = tasks.register<Copy>("generateVersionSource") {
+    description = "Expands src/main/templates into build/generated with the project version."
+    inputs.property("version", provider { project.version.toString() })
+    from(layout.projectDirectory.dir("src/main/templates/java"))
+    into(layout.buildDirectory.dir("generated/sources/version/java"))
+    filteringCharset = "UTF-8"
+    filter<ReplaceTokens>("tokens" to mapOf("version" to project.version.toString()))
+}
+
+sourceSets.main {
+    java.srcDir(generateVersionSource)
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -92,20 +109,50 @@ tasks.check {
     dependsOn(tasks.named("compileDemoJava"))
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            pom {
-                name.set("jev4j")
-                description.set("jev4j: Java SDK for the TypeSafe AI API")
-                url.set("https://typesafe.ai")
-                licenses {
-                    license {
-                        name.set("MIT")
-                    }
-                }
+// Prints the version for release tooling: `./gradlew -q printVersion`.
+tasks.register("printVersion") {
+    val v = provider { project.version.toString() }
+    doLast { println(v.get()) }
+}
+
+mavenPublishing {
+    configure(JavaLibrary(javadocJar = JavadocJar.Javadoc(), sourcesJar = SourcesJar.Sources()))
+    // Uploads to the Central Portal. `publishToMavenCentral` only stages the deployment
+    // (and is what -SNAPSHOT builds use); `publishAndReleaseToMavenCentral` also releases
+    // it. The release workflow calls the latter, so the choice is visible at the call site.
+    publishToMavenCentral()
+    // Only CI has a PGP key, so skip signing without one and keep `publishToMavenLocal`
+    // usable on a laptop. The release workflow checks the key is present before it runs,
+    // and the Portal rejects an unsigned deployment regardless. See RELEASING.md.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
+
+    coordinates(group.toString(), "jev4j", version.toString())
+
+    pom {
+        name.set("jev4j")
+        description.set("Java SDK for the TypeSafe AI API: typed yes/no, choice and score questions in one call.")
+        inceptionYear.set("2026")
+        url.set("https://github.com/galitianu/jev4j")
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://github.com/galitianu/jev4j/blob/main/LICENSE")
+                distribution.set("repo")
             }
+        }
+        developers {
+            developer {
+                id.set("galitianu")
+                name.set("Andrei Galitianu")
+                url.set("https://github.com/galitianu")
+            }
+        }
+        scm {
+            url.set("https://github.com/galitianu/jev4j")
+            connection.set("scm:git:git://github.com/galitianu/jev4j.git")
+            developerConnection.set("scm:git:ssh://git@github.com/galitianu/jev4j.git")
         }
     }
 }

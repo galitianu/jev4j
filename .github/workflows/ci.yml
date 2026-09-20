@@ -44,3 +44,41 @@ jobs:
         with:
           name: test-report-jdk${{ matrix.java }}
           path: build/reports/tests/test
+
+  snapshot:
+    name: Publish snapshot
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.PUBLISH_SNAPSHOTS == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      # Right after a release commit the version is not a snapshot yet; there is nothing
+      # to publish until the next bump, and that is not a failure.
+      - name: Check this is a snapshot version
+        id: check
+        run: |
+          set -euo pipefail
+          version="$(./gradlew -q printVersion)"
+          case "$version" in
+            *-SNAPSHOT) echo "publish=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "$version is a release version; skipping the snapshot publish." ;;
+          esac
+
+      - name: Publish snapshot to Maven Central
+        if: steps.check.outputs.publish == 'true'
+        run: ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}

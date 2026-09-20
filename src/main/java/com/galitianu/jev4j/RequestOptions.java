@@ -46,14 +46,29 @@ public final class RequestOptions {
         return new RequestOptions(timeout, retry, Collections.unmodifiableMap(copy));
     }
 
+    /**
+     * The per-attempt timeout for this call.
+     *
+     * @return the override, or empty if the call uses the client default
+     */
     public Optional<Duration> timeout() {
         return Optional.ofNullable(timeout);
     }
 
+    /**
+     * The retry policy for this call.
+     *
+     * @return the override, or empty if the call uses the client default
+     */
     public Optional<RetryPolicy> retry() {
         return Optional.ofNullable(retry);
     }
 
+    /**
+     * The extra headers for this call, in the order they were added.
+     *
+     * @return an unmodifiable map, empty if no header was added
+     */
     public Map<String, String> headers() {
         return headers;
     }

@@ -12,5 +12,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Describe {
+    /**
+     * The criteria text for the annotated constant.
+     *
+     * @return the description sent to the API as the label's criteria
+     */
     String value();
 }

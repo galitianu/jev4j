@@ -22,14 +22,31 @@ public final class Models {
         return list(RequestOptions.none());
     }
 
+    /**
+     * Lists the models available to the account.
+     *
+     * @param options per-call timeout, retry and header overrides
+     * @return the available models, in the order the API returned them
+     */
     public List<ModelCard> list(RequestOptions options) {
         return Futures.join(listAsync(options));
     }
 
+    /**
+     * Lists the models available to the account without blocking.
+     *
+     * @return a future completing with the available models
+     */
     public CompletableFuture<List<ModelCard>> listAsync() {
         return listAsync(RequestOptions.none());
     }
 
+    /**
+     * Lists the models available to the account without blocking.
+     *
+     * @param options per-call timeout, retry and header overrides
+     * @return a future completing with the available models
+     */
     public CompletableFuture<List<ModelCard>> listAsync(RequestOptions options) {
         return transport.send("GET", PATH, null, options).thenApply(Models::unwrap);
     }
