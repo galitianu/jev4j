@@ -193,8 +193,63 @@ All exceptions extend `TypeSafeException` (unchecked).
 
 ### Logging
 
-The SDK logs through `System.Logger` under the name `com.galitianu.jev4j`: request
-summaries at `INFO`, request bodies at `DEBUG`. Route it through SLF4J or JUL as usual.
+The SDK logs through `System.Logger`, so it adds no logging dependency to your build. It
+is silent unless you turn it on: nothing is logged at `INFO` or above during normal
+operation, because what your application logs is your decision, not the SDK's.
+
+There are two loggers:
+
+| Logger                        | Level   | What it logs                                          |
+| ----------------------------- | ------- | ----------------------------------------------------- |
+| `com.galitianu.jev4j.http`    | `DEBUG` | method, path, status, duration, request id, retries    |
+| `com.galitianu.jev4j.wire`    | `TRACE` | full request and response bodies                       |
+
+They are separate on purpose. The request body contains whatever you passed as the state,
+which is usually your own users' content, so enabling it is a deliberate act rather than a
+side effect of debugging a latency problem. **Do not enable `.wire` in production** unless
+you are certain your log pipeline may hold that content.
+
+The one thing logged at `WARNING` is a header you set that the SDK had to ignore because
+it sets that header itself — it would otherwise vanish with no explanation. The API key is
+never logged, at any level, and there is a test that keeps it that way.
+
+Failures are not logged. They are thrown as exceptions; logging them here too would report
+the same problem twice.
+
+#### Spring Boot
+
+Nothing to install. `spring-boot-starter-logging` bridges `java.util.logging` into SLF4J,
+and `System.Logger` uses `java.util.logging` when nothing else is installed, so SDK
+records arrive in Logback under their logger names:
+
+```yaml
+logging:
+  level:
+    com.galitianu.jev4j.http: DEBUG   # request/response summaries
+    com.galitianu.jev4j.wire: TRACE   # bodies; leaks user content, use with care
+```
+
+To skip the JUL hop, add SLF4J's platform-logging provider. Spring Boot manages its
+version, so you do not need to pin one:
+
+```kotlin
+runtimeOnly("org.slf4j:slf4j-jdk-platform-logging")
+```
+
+#### Plain JVM
+
+With no logging framework, `System.Logger` writes through `java.util.logging`, whose
+default console handler is at `INFO` — which is why the SDK stays below it. To see the
+SDK's output:
+
+```properties
+# logging.properties, passed with -Djava.util.logging.config.file=logging.properties
+handlers = java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level = FINE
+com.galitianu.jev4j.http.level = FINE
+```
+
+`System.Logger` levels map onto JUL as `DEBUG` to `FINE` and `TRACE` to `FINER`.
 
 ## Development
 

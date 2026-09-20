@@ -27,7 +27,19 @@ import java.util.function.DoubleSupplier;
 /** HTTP transport: headers, JSON, per-attempt timeouts, and retries. */
 final class Transport {
 
-    private static final System.Logger LOG = System.getLogger("com.galitianu.jev4j");
+    /**
+     * Method, path, status, timing and retry decisions. DEBUG, never higher: a library has no
+     * business writing to an application's logs during normal operation, and INFO is on by
+     * default in both java.util.logging and Spring Boot.
+     */
+    private static final System.Logger HTTP = System.getLogger("com.galitianu.jev4j.http");
+
+    /**
+     * Request and response bodies, at TRACE only. Separate from {@link #HTTP} because the body
+     * carries whatever the caller passed as the state, which is usually their users' content;
+     * turning on request tracing should not be a side effect of debugging latency.
+     */
+    private static final System.Logger WIRE = System.getLogger("com.galitianu.jev4j.wire");
     private static final Set<String> RESERVED_HEADERS = Set.of(
         "authorization", "accept", "content-type", "user-agent", "x-typesafe-sdk", "x-typesafe-runtime", "x-typesafe-retry-count");
 
@@ -79,14 +91,22 @@ final class Transport {
         }
 
         Prepared prepared = new Prepared(tag, method, URI.create(baseUrl + path), headers, json, attemptTimeout, policy);
-        LOG.log(System.Logger.Level.DEBUG, () -> tag + " -> " + prepared.uri + (json == null ? "" : " " + json));
+        HTTP.log(System.Logger.Level.DEBUG, () -> tag + " -> " + prepared.uri);
+        if (json != null) {
+            WIRE.log(System.Logger.Level.TRACE, () -> tag + " request body: " + json);
+        }
         return attemptWithRetries(prepared, 0).thenApply(res -> parseBody(res.body(), res.headers()));
     }
 
     private static void putUnlessReserved(Map<String, String> headers, String name, String value) {
-        if (!RESERVED_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
-            headers.put(name, value);
+        if (RESERVED_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
+            // The only thing worth warning about: the caller asked for something that did not
+            // happen, and nothing else would ever tell them why the header never arrived.
+            HTTP.log(System.Logger.Level.WARNING,
+                () -> "Ignoring header \"" + name + "\": the SDK sets it and it cannot be overridden.");
+            return;
         }
+        headers.put(name, value);
     }
 
     private record Prepared(String tag, String method, URI uri, Map<String, String> headers, String body, Duration timeout, RetryPolicy retry) {}
@@ -98,15 +118,18 @@ final class Transport {
             long elapsedMs = (System.nanoTime() - started) / 1_000_000;
             if (err != null) {
                 TypeSafeException failure = classify(err, p.timeout);
-                LOG.log(System.Logger.Level.INFO, () -> p.tag + " failed after " + elapsedMs + "ms: " + failure.getMessage());
+                // Logged at DEBUG only: the failure is thrown to the caller, and logging it here
+                // as well would report the same problem twice from two different places.
+                HTTP.log(System.Logger.Level.DEBUG, () -> p.tag + " failed after " + elapsedMs + "ms: " + failure.getMessage());
                 if (retriesLeft <= 0 || !p.retry.retries(failure)) {
                     return CompletableFuture.<HttpResponse<String>>failedFuture(failure);
                 }
                 return backOff(p, attempt, retriesLeft, failure.getMessage(), null);
             }
             String requestId = res.headers().firstValue(ApiException.REQUEST_ID_HEADER).orElse(null);
-            LOG.log(System.Logger.Level.INFO, () -> p.tag + " <- " + res.statusCode() + " in " + elapsedMs + "ms"
+            HTTP.log(System.Logger.Level.DEBUG, () -> p.tag + " <- " + res.statusCode() + " in " + elapsedMs + "ms"
                 + (requestId == null ? "" : " (request " + requestId + ")"));
+            WIRE.log(System.Logger.Level.TRACE, () -> p.tag + " response body: " + res.body());
             if (res.statusCode() >= 200 && res.statusCode() < 300) {
                 return CompletableFuture.completedFuture(res);
             }
@@ -121,7 +144,7 @@ final class Transport {
 
     private CompletableFuture<HttpResponse<String>> backOff(Prepared p, int attempt, int retriesLeft, String reason, HttpHeaders headers) {
         Duration delay = RetryDelays.delayFor(attempt, headers, p.retry, random);
-        LOG.log(System.Logger.Level.INFO, () -> p.tag + " retrying in " + delay.toMillis() + "ms (retry " + (attempt + 1) + "/"
+        HTTP.log(System.Logger.Level.DEBUG, () -> p.tag + " retrying in " + delay.toMillis() + "ms (retry " + (attempt + 1) + "/"
             + (attempt + retriesLeft) + ") after " + reason);
         Executor delayed = CompletableFuture.delayedExecutor(delay.toMillis(), TimeUnit.MILLISECONDS);
         return CompletableFuture.supplyAsync(() -> null, delayed).thenCompose(v -> attemptWithRetries(p, attempt + 1));

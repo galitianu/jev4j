@@ -8,6 +8,22 @@ While the version is below 1.0.0 a minor bump may contain breaking changes.
 
 ## [Unreleased]
 
+### Changed
+
+- Logging is no longer on by default. Request and response summaries moved from `INFO` to
+  `DEBUG`, so adding jev4j to an application no longer writes two lines per API call to
+  stderr on a stock JVM, or to Logback in Spring Boot.
+- The single `com.galitianu.jev4j` logger split into `com.galitianu.jev4j.http`
+  (method, path, status, timing, retries; `DEBUG`) and `com.galitianu.jev4j.wire`
+  (request and response bodies; `TRACE`). Debugging latency no longer emits the caller's
+  state, which is usually their own users' content, into the log.
+- Failures are no longer logged before being thrown; they were reported twice.
+
+### Added
+
+- A `WARNING` when a caller-supplied header is ignored because the SDK sets that header
+  itself. It was previously dropped silently with no way to find out why.
+
 ## [0.1.0] - 2026-09-20
 
 First public release.
