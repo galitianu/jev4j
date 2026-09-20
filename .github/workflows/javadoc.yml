@@ -1,0 +1,140 @@
+name: Javadoc
+
+# Publishes the API reference to https://galitianu.github.io/jev4j/
+#
+#   tag v1.2.3  ->  /1.2.3/ and /latest/
+#   push main   ->  /snapshot/
+#
+# Old versions are kept: the gh-pages branch is updated in place, never replaced.
+# Requires Settings -> Pages -> Source: "Deploy from a branch", branch gh-pages, root.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: javadoc-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build and publish javadoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build javadoc
+        run: ./gradlew javadoc --stacktrace
+
+      - name: Resolve destination
+        id: dest
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            echo "dir=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "alias=latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "dir=snapshot" >> "$GITHUB_OUTPUT"
+            echo "alias=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIR: ${{ steps.dest.outputs.dir }}
+          ALIAS: ${{ steps.dest.outputs.alias }}
+        run: |
+          set -euo pipefail
+
+          mkdir gh-pages
+          git -C gh-pages init -q -b gh-pages
+          git -C gh-pages remote add origin \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git -C gh-pages fetch -q --depth=1 origin gh-pages 2>/dev/null; then
+            git -C gh-pages reset -q --hard FETCH_HEAD
+          fi
+
+          rm -rf "gh-pages/$DIR"
+          mkdir -p "gh-pages/$DIR"
+          cp -R build/docs/javadoc/. "gh-pages/$DIR/"
+          # /latest/ only ever moves forward, so tagging a backport release after a
+          # newer one does not replace the current docs with older ones.
+          if [ -n "$ALIAS" ]; then
+            newest=$(
+              for p in gh-pages/*/; do
+                [ -d "$p" ] || continue
+                v=${p#gh-pages/}
+                v=${v%/}
+                if [ "$v" != latest ] && [ "$v" != snapshot ]; then
+                  echo "$v"
+                fi
+              done | sort -V | tail -1
+            )
+            if [ "$newest" = "$DIR" ]; then
+              rm -rf "gh-pages/$ALIAS"
+              mkdir -p "gh-pages/$ALIAS"
+              cp -R build/docs/javadoc/. "gh-pages/$ALIAS/"
+            else
+              echo "$DIR is older than $newest; leaving /$ALIAS/ untouched."
+            fi
+          fi
+
+          # Pages would otherwise run Jekyll, which drops files starting with "_".
+          touch gh-pages/.nojekyll
+
+          # Regenerate the version index from whatever directories exist now.
+          {
+            echo '<!DOCTYPE html>'
+            echo '<html lang="en"><head><meta charset="utf-8">'
+            echo '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            echo '<title>jev4j API documentation</title>'
+            echo '<style>body{font:16px/1.6 system-ui,sans-serif;max-width:40rem;margin:4rem auto;padding:0 1rem}'
+            echo 'li{margin:.25rem 0}code{background:#f4f4f4;padding:.1rem .3rem;border-radius:3px}</style>'
+            echo '</head><body>'
+            echo '<h1>jev4j</h1>'
+            echo '<p>Java SDK for the <a href="https://typesafe.ai">TypeSafe AI</a> API.'
+            echo 'Source on <a href="https://github.com/galitianu/jev4j">GitHub</a>.</p>'
+            echo '<h2>API documentation</h2>'
+            echo '<ul>'
+            for d in latest snapshot; do
+              if [ -d "gh-pages/$d" ]; then
+                echo "<li><a href=\"$d/\">$d</a></li>"
+              fi
+            done
+            for p in gh-pages/*/; do
+              [ -d "$p" ] || continue
+              v=${p#gh-pages/}
+              v=${v%/}
+              if [ "$v" != latest ] && [ "$v" != snapshot ]; then
+                echo "$v"
+              fi
+            done | sort -Vr | while read -r v; do
+              echo "<li><a href=\"$v/\">$v</a></li>"
+            done
+            echo '</ul>'
+            echo '</body></html>'
+          } > gh-pages/index.html
+
+          cd gh-pages
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No documentation changes."
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -q -m "Publish javadoc for $DIR"
+          git push -q origin gh-pages

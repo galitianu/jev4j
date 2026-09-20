@@ -33,7 +33,16 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.withType<Javadoc>().configureEach {
     options.encoding = "UTF-8"
-    (options as StandardJavadocDocletOptions).addBooleanOption("Xdoclint:none", true)
+    with(options as StandardJavadocDocletOptions) {
+        // Fail the build on broken {@link} targets, bad @param/@return names and
+        // malformed HTML. -missing allows types to go undocumented; it does not
+        // excuse a doc comment that is present but wrong.
+        addStringOption("Xdoclint:all,-missing", "-quiet")
+        addStringOption("Xwerror", "-quiet")
+        windowTitle = "jev4j $version"
+        docTitle = "jev4j $version"
+        bottom = "jev4j &mdash; Java SDK for the TypeSafe AI API"
+    }
 }
 
 tasks.jar {

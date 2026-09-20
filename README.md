@@ -6,6 +6,8 @@ TypeSafe answers typed questions about a piece of text or JSON (the *state*) in 
 a yes/no probability (**noul**), a pick from a fixed set (**choice**), or a rating on an
 ordered rubric (**score**), each with probabilities and confidence.
 
+API reference: **[latest](https://galitianu.github.io/jev4j/latest/)** &middot; [all versions](https://galitianu.github.io/jev4j/)
+
 ## Install
 
 ```kotlin
@@ -185,7 +187,15 @@ summaries at `INFO`, request bodies at `DEBUG`. Route it through SLF4J or JUL as
 ```
 ./gradlew test          # unit tests against an in-process fake API
 ./gradlew demo          # live demo, needs TYPESAFE_API_KEY
-./gradlew javadoc
+./gradlew javadoc       # API reference in build/docs/javadoc
 ```
 
 The build provisions JDK 21 via the Foojay toolchain resolver if none is installed.
+
+Javadoc runs with `-Xdoclint:all,-missing -Xwerror`, so a broken `{@link}`, a stale
+`@param` name or malformed HTML fails the build rather than reaching the docs site.
+Undocumented elements are allowed; documentation that contradicts the code is not.
+
+`.github/workflows/javadoc.yml` publishes to GitHub Pages: pushes to `main` land in
+`/snapshot/`, and tagging `vX.Y.Z` publishes `/X.Y.Z/` and moves `/latest/` forward.
+Released versions stay online, so users on an old release read docs for that release.
