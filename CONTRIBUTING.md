@@ -4,6 +4,14 @@ Thanks for taking the time. Issues and pull requests are both welcome; if a chan
 large or reshapes the public API, please open an issue first so we can agree on the shape
 before you write it.
 
+## Branches
+
+Work lands on `develop` and reaches `main` when it is ready to be published. Pushing to
+`main` publishes a snapshot to Maven Central and the javadoc for it, so `main` is the
+branch that costs something; `develop` gets the same CI build and test on JDK 17, 21 and
+25, and publishes nothing. Branch feature work off `develop` and open pull requests
+against it.
+
 ## Building
 
 Java 21 or newer to build; the library itself targets Java 17.
