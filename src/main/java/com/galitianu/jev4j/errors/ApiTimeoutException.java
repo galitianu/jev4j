@@ -1,4 +1,4 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.errors;
 
 import java.time.Duration;
 

@@ -1,9 +1,16 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.internal;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.galitianu.jev4j.RequestOptions;
+import com.galitianu.jev4j.RetryPolicy;
+import com.galitianu.jev4j.Version;
+import com.galitianu.jev4j.errors.ApiConnectionException;
+import com.galitianu.jev4j.errors.ApiException;
+import com.galitianu.jev4j.errors.ApiTimeoutException;
+import com.galitianu.jev4j.errors.TypeSafeException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -25,7 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.DoubleSupplier;
 
 /** HTTP transport: headers, JSON, per-attempt timeouts, and retries. */
-final class Transport {
+public final class Transport {
 
     /**
      * Method, path, status, timing and retry decisions. DEBUG, never higher: a library has no
@@ -53,7 +60,7 @@ final class Transport {
     private final DoubleSupplier random;
     private final AtomicLong requestCount = new AtomicLong();
 
-    Transport(HttpClient http, ObjectMapper mapper, String baseUrl, String apiKey, Duration timeout, RetryPolicy retry,
+    public Transport(HttpClient http, ObjectMapper mapper, String baseUrl, String apiKey, Duration timeout, RetryPolicy retry,
               Map<String, String> defaultHeaders, DoubleSupplier random) {
         this.http = http;
         this.mapper = mapper;
@@ -66,7 +73,7 @@ final class Transport {
     }
 
     /** Sends a request and returns the parsed JSON body of a 2xx response. */
-    CompletableFuture<JsonNode> send(String method, String path, Object body, RequestOptions options) {
+    public CompletableFuture<JsonNode> send(String method, String path, Object body, RequestOptions options) {
         Duration attemptTimeout = options.timeout().orElse(timeout);
         RetryPolicy policy = options.retry().orElse(retry);
         String tag = "#" + requestCount.incrementAndGet() + " " + method + " " + path;

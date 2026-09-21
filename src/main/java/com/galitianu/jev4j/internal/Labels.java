@@ -1,5 +1,8 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.internal;
 
+import com.galitianu.jev4j.Describe;
+import com.galitianu.jev4j.Label;
+import com.galitianu.jev4j.errors.TypeSafeException;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,7 +11,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /** Maps enum constants to wire labels and back. */
-final class Labels<E extends Enum<E>> {
+public final class Labels<E extends Enum<E>> {
 
     private final Class<E> type;
     private final Map<String, Object> criteria;
@@ -20,7 +23,7 @@ final class Labels<E extends Enum<E>> {
         this.byLabel = byLabel;
     }
 
-    static <E extends Enum<E>> Labels<E> of(Class<E> type) {
+    public static <E extends Enum<E>> Labels<E> of(Class<E> type) {
         E[] constants = type.getEnumConstants();
         if (constants == null || constants.length == 0) {
             throw new TypeSafeException("Enum " + type.getName() + " has no constants to use as choice labels.");
@@ -45,11 +48,11 @@ final class Labels<E extends Enum<E>> {
         return new Labels<>(type, Collections.unmodifiableMap(criteria), byLabel);
     }
 
-    Map<String, Object> criteria() {
+    public Map<String, Object> criteria() {
         return criteria;
     }
 
-    E decode(String label) {
+    public E decode(String label) {
         E constant = byLabel.get(label);
         if (constant == null) {
             throw new TypeSafeException("The API returned label \"" + label + "\" which is not a constant of " + type.getName() + ".");

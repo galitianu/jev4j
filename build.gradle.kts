@@ -70,12 +70,22 @@ tasks.withType<Javadoc>().configureEach {
         docTitle = "jev4j $version"
         bottom = "jev4j &mdash; Java SDK for the TypeSafe AI API"
     }
+    // The API reference documents what the module exports, and nothing else. Gradle
+    // passes source files explicitly, which makes javadoc ignore --show-packages, so
+    // the unexported package is dropped from the sources instead and read from the
+    // compiled classes. That only works outside module mode, which is why module-info
+    // is left out too; it carries no API of its own.
+    exclude("**/internal/**", "**/module-info.java")
+    modularity.inferModulePath.set(false)
+    dependsOn(tasks.classes)
+    classpath += files(sourceSets.main.map { it.output })
 }
 
 tasks.jar {
     manifest {
         attributes(
-            "Automatic-Module-Name" to "com.galitianu.jev4j",
+            // The module name comes from src/main/java/module-info.java, not a manifest
+            // attribute; an Automatic-Module-Name here would be ignored.
             "Implementation-Title" to "jev4j",
             "Implementation-Version" to project.version,
         )

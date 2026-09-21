@@ -1,6 +1,10 @@
 package com.galitianu.jev4j;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.galitianu.jev4j.errors.TypeSafeException;
+import com.galitianu.jev4j.internal.Futures;
+import com.galitianu.jev4j.internal.Keys;
+import com.galitianu.jev4j.internal.Transport;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;

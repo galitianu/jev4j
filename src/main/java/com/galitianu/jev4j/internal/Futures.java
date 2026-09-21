@@ -1,13 +1,14 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.internal;
 
+import com.galitianu.jev4j.errors.TypeSafeException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /** Blocking on futures while surfacing SDK exceptions unwrapped. */
-final class Futures {
+public final class Futures {
     private Futures() {}
 
-    static <T> T join(CompletableFuture<T> future) {
+    public static <T> T join(CompletableFuture<T> future) {
         try {
             return future.get();
         } catch (InterruptedException e) {

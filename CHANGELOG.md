@@ -10,6 +10,13 @@ While the version is below 1.0.0 a minor bump may contain breaking changes.
 
 ### Changed
 
+- **Breaking.** The exceptions moved from `com.galitianu.jev4j` to
+  `com.galitianu.jev4j.errors`. Code that names one, including `catch` blocks, needs the
+  new import; a wildcard `import com.galitianu.jev4j.*;` no longer covers them. Nothing
+  else about them changed — the hierarchy, names and methods are the same.
+- The internals (`Transport`, `Futures`, `Keys`, `Labels`, `RetryDelays`) moved to
+  `com.galitianu.jev4j.internal`. They were package-private and never callable, so this
+  breaks no code that compiled before.
 - Logging is no longer on by default. Request and response summaries moved from `INFO` to
   `DEBUG`, so adding jev4j to an application no longer writes two lines per API call to
   stderr on a stock JVM, or to Logback in Spring Boot.
@@ -21,6 +28,9 @@ While the version is below 1.0.0 a minor bump may contain breaking changes.
 
 ### Added
 
+- A `module-info.java`, so the jar is an explicit Java module rather than an automatic
+  one. It exports `com.galitianu.jev4j` and `com.galitianu.jev4j.errors`, and the
+  implementation packages are now unreachable rather than merely undocumented.
 - A `WARNING` when a caller-supplied header is ignored because the SDK sets that header
   itself. It was previously dropped silently with no way to find out why.
 

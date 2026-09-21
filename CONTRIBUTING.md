@@ -42,9 +42,13 @@ consistent across the codebase and worth keeping:
 - 4-space indent, no tabs, no wildcard imports.
 - Comments explain *why*, not *what*. If a line needs a comment to say what it does, the
   line is usually the problem.
-- Public API is deliberately small. `Transport`, `AnswerDecoder`, `Futures`, `Keys`,
-  `Labels` and `RetryDelays` are package-private on purpose — please keep new internals
-  package-private too.
+- Public API is deliberately small, and the package layout says which is which:
+  `com.galitianu.jev4j` holds the client and the question and answer types,
+  `com.galitianu.jev4j.errors` the exception hierarchy, and `com.galitianu.jev4j.internal`
+  everything else. Only the first two are exported by `module-info.java`, so the types
+  under `internal` are `public` for the compiler's benefit and not API. New internals
+  belong there, or stay package-private where they already are (`AnswerDecoder` needs
+  package-private access to `SystemOneResponse`, so it stays put).
 - Exception messages name the thing that went wrong and, where possible, what to do about
   it.
 

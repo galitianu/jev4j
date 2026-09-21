@@ -1,6 +1,7 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.errors;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.galitianu.jev4j.internal.RetryDelays;
 import java.net.http.HttpHeaders;
 import java.time.Duration;
 import java.util.Optional;

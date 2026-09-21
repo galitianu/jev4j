@@ -1,8 +1,11 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.galitianu.jev4j.RetryPolicy;
+import com.galitianu.jev4j.errors.ApiTimeoutException;
+import com.galitianu.jev4j.errors.TypeSafeException;
 import java.net.http.HttpHeaders;
 import java.time.Duration;
 import java.time.ZonedDateTime;

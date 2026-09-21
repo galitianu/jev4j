@@ -11,6 +11,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.galitianu.jev4j.errors.ApiConnectionException;
+import com.galitianu.jev4j.errors.ApiException;
+import com.galitianu.jev4j.errors.ApiTimeoutException;
+import com.galitianu.jev4j.errors.AuthenticationException;
+import com.galitianu.jev4j.errors.InternalServerException;
+import com.galitianu.jev4j.errors.PermissionDeniedException;
+import com.galitianu.jev4j.errors.RateLimitException;
+import com.galitianu.jev4j.errors.TypeSafeException;
+import com.galitianu.jev4j.errors.UnprocessableEntityException;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.LinkedHashMap;

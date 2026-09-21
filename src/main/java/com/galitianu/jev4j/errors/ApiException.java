@@ -1,4 +1,4 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.errors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.net.http.HttpHeaders;

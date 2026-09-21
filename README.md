@@ -33,6 +33,10 @@ dependencies {
 
 Jackson (`jackson-databind`) is the only dependency.
 
+The jar is a Java module named `com.galitianu.jev4j`. It exports `com.galitianu.jev4j`
+(the client, questions and answers) and `com.galitianu.jev4j.errors` (the exceptions);
+anything else in the jar is implementation detail.
+
 Every commit on `main` is also published as a snapshot of the next version (for example
 `0.2.0-SNAPSHOT`), from:
 
@@ -175,7 +179,8 @@ Per call: `RequestOptions.none().withRetry(...)`, `.withTimeout(...)`, `.withHea
 
 ### Errors
 
-All exceptions extend `TypeSafeException` (unchecked).
+All exceptions live in `com.galitianu.jev4j.errors` and extend `TypeSafeException`
+(unchecked).
 
 | Exception                       | When                                   |
 |---------------------------------|----------------------------------------|

@@ -1,5 +1,6 @@
 package com.galitianu.jev4j;
 
+import com.galitianu.jev4j.errors.TypeSafeException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;

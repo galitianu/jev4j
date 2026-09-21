@@ -1,5 +1,6 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.internal;
 
+import com.galitianu.jev4j.RetryPolicy;
 import java.net.http.HttpHeaders;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -9,11 +10,11 @@ import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
 /** Retry delay calculation. */
-final class RetryDelays {
+public final class RetryDelays {
     private RetryDelays() {}
 
     /** Parses {@code retry-after-ms} or {@code Retry-After} (seconds or HTTP date), preferring the former. */
-    static Optional<Duration> parseRetryAfter(HttpHeaders headers) {
+    public static Optional<Duration> parseRetryAfter(HttpHeaders headers) {
         if (headers == null) {
             return Optional.empty();
         }
@@ -49,7 +50,7 @@ final class RetryDelays {
     }
 
     /** Delay before the zero-based retry {@code attempt}: the server's delay if allowed, else capped backoff with jitter. */
-    static Duration delayFor(int attempt, HttpHeaders headers, RetryPolicy policy, DoubleSupplier random) {
+    public static Duration delayFor(int attempt, HttpHeaders headers, RetryPolicy policy, DoubleSupplier random) {
         if (policy.respectRetryAfter() && headers != null) {
             Optional<Duration> retryAfter = parseRetryAfter(headers);
             if (retryAfter.isPresent() && retryAfter.get().compareTo(policy.maxRetryAfter()) <= 0) {

@@ -1,10 +1,12 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.internal;
+
+import com.galitianu.jev4j.errors.TypeSafeException;
 
 /** Validation of question keys. */
-final class Keys {
+public final class Keys {
     private Keys() {}
 
-    static String requireValid(String name) {
+    public static String requireValid(String name) {
         if (name == null || name.isBlank()) {
             throw new TypeSafeException("Question name must not be blank.");
         }

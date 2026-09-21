@@ -1,4 +1,4 @@
-package com.galitianu.jev4j;
+package com.galitianu.jev4j.errors;
 
 /** Base class for all SDK exceptions. */
 public class TypeSafeException extends RuntimeException {

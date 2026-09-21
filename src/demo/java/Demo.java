@@ -1,4 +1,3 @@
-import com.galitianu.jev4j.ApiException;
 import com.galitianu.jev4j.Choice;
 import com.galitianu.jev4j.Describe;
 import com.galitianu.jev4j.ModelCard;
@@ -6,6 +5,7 @@ import com.galitianu.jev4j.Noul;
 import com.galitianu.jev4j.Score;
 import com.galitianu.jev4j.SystemOneResponse;
 import com.galitianu.jev4j.TypeSafeClient;
+import com.galitianu.jev4j.errors.ApiException;
 import java.util.Map;
 
 /** Run with `./gradlew demo`. Needs TYPESAFE_API_KEY in the environment. */

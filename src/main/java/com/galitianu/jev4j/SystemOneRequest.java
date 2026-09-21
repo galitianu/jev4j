@@ -1,5 +1,7 @@
 package com.galitianu.jev4j;
 
+import com.galitianu.jev4j.errors.TypeSafeException;
+import com.galitianu.jev4j.internal.Keys;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;

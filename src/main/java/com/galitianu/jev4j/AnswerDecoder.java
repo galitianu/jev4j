@@ -2,6 +2,7 @@ package com.galitianu.jev4j;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.galitianu.jev4j.errors.TypeSafeException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
